@@ -29,3 +29,25 @@ def formatar_telefone(numero: str) -> str:
     if len(resto) == 9:
         return f"+55 ({ddd}) {resto[:5]}-{resto[5:]}"
     return f"+55 ({ddd}) {resto[:4]}-{resto[4:]}"
+
+def extrair_razao_e_cnpj(texto_combinado: str):
+    """
+    Desestrutura a string no formato 'Razao || CNPJ'
+    Retorna uma tupla (razao_bruta, cnpj_bruto)
+    Se não houver o '||', tenta deduzir ou retorna nulo.
+    """
+    if not texto_combinado:
+        return "", ""
+        
+    if "||" in texto_combinado:
+        partes = texto_combinado.split("||")
+        razao = partes[0].strip()
+        cnpj = partes[1].strip() if len(partes) > 1 else ""
+        
+        return razao, cnpj
+
+    limpo = limpar_pontuacao(texto_combinado)
+    if len(limpo) == 14:
+        return "", texto_combinado
+        
+    return texto_combinado.strip(), ""

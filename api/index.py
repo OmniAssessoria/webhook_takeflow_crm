@@ -8,6 +8,7 @@ from api.dependencies import validar_token
 from api.database.connection import get_db_connection
 from api.database.repository import DbRepository
 from api.services.crm_service import criar_lead_crm
+from api.services.formatters import extrair_razao_e_cnpj
 
 app = FastAPI(title="Webhook Takeflow Integrador")
 
@@ -18,14 +19,20 @@ async def processar_lead(
     db_conn = Depends(get_db_connection) 
 ):
     try:
+        razao_extraida, cnpj_extraido = extrair_razao_e_cnpj(lead.razao_cnpj)
+        
+        if not razao_extraida and not cnpj_extraido:
+             return {"status": False, "mensagem": "Parâmetro razao_cnpj mal formatado."}
+
         repo = DbRepository(db_conn)
-        info_empresa = repo.buscar_info_lead(lead.cnpj, lead.razao)
+        info_empresa = repo.buscar_info_lead(cnpj_extraido, razao_extraida)
         
         if not info_empresa:
              return {"status": False, "mensagem": "Empresa não encontrada no banco."}
          
         historico = info_empresa.get("historico_disparos") or []
         seq_consultor = historico[0].get("seq_consultor") if historico else None
+        
         deal_id = await criar_lead_crm(info_empresa)
         
         if seq_consultor:
@@ -53,8 +60,10 @@ async def declinar_lead(
     db_conn = Depends(get_db_connection)
 ):
     try:
+        razao_extraida, cnpj_extraido = extrair_razao_e_cnpj(lead.razao_cnpj)
+        
         repo = DbRepository(db_conn)
-        info_empresa = repo.buscar_info_lead(lead.cnpj, lead.razao)
+        info_empresa = repo.buscar_info_lead(cnpj_extraido, razao_extraida)
         
         if info_empresa:
             repo.atualizar_disparo_falha(info_empresa['seq_empresa'])
