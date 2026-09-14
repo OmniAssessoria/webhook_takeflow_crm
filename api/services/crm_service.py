@@ -5,20 +5,20 @@ from datetime import datetime
 
 URL_OMNI_API = os.environ.get("CRM_API")
 TOKEN_AXION = os.environ.get("TOKEN_CRM") 
-PIPELINE_ID = os.environ.get("CRM_FUNIL_ID") 
-STAGE_ID = os.environ.get("CRM_ETAPA_ID") 
 
 def log_sync(mensagem: str):
     """Função simples para padronizar os logs com Data e Hora"""
     agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{agora}] {mensagem}")
 
-async def criar_lead_crm(empresa_dados: dict):
+async def criar_lead_crm(empresa_dados: dict, pipeline_id: str, stage_id: str):
     """
     Monta o payload estrito com os dados que devem subir, 
-    atribuindo o lead ao consultor que fez o disparo.
+    atribuindo o lead ao consultor que fez o disparo,
+    direcionando para o Funil e Etapa informados pelo Webhook.
     """
     log_sync(f"Iniciando montagem de payload para CRM. Empresa: {empresa_dados.get('razao')}")
+    log_sync(f"Direcionando para Pipeline: {pipeline_id} | Stage: {stage_id}")
     
     contacts_payload = []
     linhas_dados = empresa_dados.get("servicos_operadora") or []
@@ -78,12 +78,14 @@ async def criar_lead_crm(empresa_dados: dict):
     }
     
     custom_fields_limpo = {k: v for k, v in custom_fields.items() if v != ""}
+    
+    # Injetando as variáveis dinâmicas no JSON final
     payload_creation = {
         "companyName": empresa_dados.get("razao"),
         "companyCnpj": empresa_dados.get("cnpj"),
         "value": 0,
-        "pipelineId": PIPELINE_ID,
-        "stageId": STAGE_ID,  
+        "pipelineId": pipeline_id, 
+        "stageId": stage_id,  
         "customFields": json.dumps(custom_fields_limpo),
         "contacts": contacts_payload
     }

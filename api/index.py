@@ -32,8 +32,11 @@ async def processar_lead(
          
         historico = info_empresa.get("historico_disparos") or []
         seq_consultor = historico[0].get("seq_consultor") if historico else None
-        
-        deal_id = await criar_lead_crm(info_empresa)
+        deal_id = await criar_lead_crm(
+            empresa_dados=info_empresa, 
+            pipeline_id=lead.pipeline_id, 
+            stage_id=lead.stage_id
+        )
         
         if seq_consultor:
             repo.atualizar_lead_sucesso(info_empresa['seq_empresa'], seq_consultor) 
@@ -75,5 +78,4 @@ async def declinar_lead(
 
 @app.get("/webhook/exec-status")
 async def validar_api_status(token_valido: bool = Depends(validar_token)):
-    """Rota direta para testar estabilidade do host Vercel e validade de Token"""
     return {"status": "ok", "mensagem": "Webhook Serverless Online."}
