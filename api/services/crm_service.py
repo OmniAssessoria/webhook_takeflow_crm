@@ -79,7 +79,6 @@ async def criar_lead_crm(empresa_dados: dict, pipeline_id: str, stage_id: str):
     
     custom_fields_limpo = {k: v for k, v in custom_fields.items() if v != ""}
     
-    # Injetando as variáveis dinâmicas no JSON final
     payload_creation = {
         "companyName": empresa_dados.get("razao"),
         "companyCnpj": empresa_dados.get("cnpj"),
